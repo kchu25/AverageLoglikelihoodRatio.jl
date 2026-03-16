@@ -206,10 +206,33 @@ using Random
         @test 0.0 < results_pv[1, 1].pvalue ≤ 1.0
     end
 
-    # ── Reverse complement ──────────────────────────────────────────────────────
+    # ── Reverse complement ─────────────────────────────────────────────────
     @testset "compare_pfms – reverse complement" begin
-        # A motif and its reverse complement should be a perfect match
-        # when reverse_comp=true
+        # Direct test of _reverse_complement_pfm transformation
+        # Rows: A=1, C=2, G=3, T=4
+        pfm_orig = [0.7 0.1 0.2;   # A
+                    0.1 0.6 0.1;   # C
+                    0.1 0.2 0.6;   # G
+                    0.1 0.1 0.1]   # T
+        pfm_rc = AverageLoglikelihoodRatio._reverse_complement_pfm(pfm_orig)
+
+        # Columns must be reversed
+        @test pfm_rc[:, 1] ≈ pfm_orig[[4, 3, 2, 1], 3]  # last col, rows swapped
+        @test pfm_rc[:, 2] ≈ pfm_orig[[4, 3, 2, 1], 2]  # middle col, rows swapped
+        @test pfm_rc[:, 3] ≈ pfm_orig[[4, 3, 2, 1], 1]  # first col, rows swapped
+
+        # Row order in RC: row i of RC = row (5-i) of original (at mirrored column)
+        # A row of RC == T row of original (reversed)
+        @test pfm_rc[1, :] ≈ reverse(pfm_orig[4, :])   # A ← T
+        @test pfm_rc[2, :] ≈ reverse(pfm_orig[3, :])   # C ← G
+        @test pfm_rc[3, :] ≈ reverse(pfm_orig[2, :])   # G ← C
+        @test pfm_rc[4, :] ≈ reverse(pfm_orig[1, :])   # T ← A
+
+        # RC of RC must equal the original
+        @test AverageLoglikelihoodRatio._reverse_complement_pfm(pfm_rc) ≈ pfm_orig
+
+        # Width is preserved
+        @test size(pfm_rc) == size(pfm_orig)
         motif = [0.9 0.05 0.05;
                  0.05 0.85 0.05;
                  0.025 0.05 0.85;
