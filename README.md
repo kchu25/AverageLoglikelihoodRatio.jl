@@ -78,4 +78,4 @@ See `latex/allr.tex` for the full formulas.
 
 ## Reference
 
-Wang T, Bhatt D. "Similarity between motifs." In: *Bentley S, ed. Methods in Molecular Biology*. 2008.
+Wang T, Stormo GD. "Combining phylogenetic data with co-regulated genes to identify regulatory motifs." *Bioinformatics*, 19(18):2369-2380, 2003. https://academic.oup.com/bioinformatics/article/19/18/2369/194379
