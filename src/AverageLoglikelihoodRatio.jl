@@ -1,7 +1,6 @@
 module AverageLoglikelihoodRatio
 
 using Random
-using Statistics
 
 export allr_column, allr_matrix, compare_pfms, ALLRResult
 
