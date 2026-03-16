@@ -157,4 +157,50 @@ using Random
         s2 = String(take!(buf2))
         @test occursin("not computed", s2)
     end
+
+    # ── Batch comparison: multiple inputs × multiple targets ───────────────
+    @testset "compare_pfms – batch" begin
+        pfm1 = [0.9 0.05 0.05;
+                0.05 0.85 0.05;
+                0.025 0.05 0.85;
+                0.025 0.05 0.05]
+
+        pfm2 = [0.88 0.06;
+                0.04 0.84;
+                0.04 0.05;
+                0.04 0.05]
+
+        pfm3 = [0.05 0.05 0.85 0.25;
+                0.85 0.05 0.05 0.25;
+                0.05 0.85 0.05 0.25;
+                0.05 0.05 0.05 0.25]
+
+        inputs  = [pfm1, pfm2]
+        targets = [pfm2, pfm3, pfm1]
+
+        # Without p-value (fast)
+        results = compare_pfms(inputs, targets; compute_pvalue=false)
+        @test size(results) == (2, 3)
+        @test all(r -> isa(r, ALLRResult), results)
+        @test all(r -> isnan(r.pvalue), results)
+
+        # Each entry should match the single-pair call
+        for i in 1:2, j in 1:3
+            single = compare_pfms(inputs[i], targets[j]; compute_pvalue=false)
+            @test results[i, j].score ≈ single.score
+            @test results[i, j].offset == single.offset
+        end
+
+        # Self-comparison: pfm vs itself should have high score
+        self_results = compare_pfms([pfm1], [pfm1]; compute_pvalue=false)
+        @test size(self_results) == (1, 1)
+        @test self_results[1, 1].score > 0.0
+        @test self_results[1, 1].offset == 0
+
+        # With p-value
+        rng = MersenneTwister(123)
+        results_pv = compare_pfms([pfm1], [pfm1]; n_perm=200, rng=rng)
+        @test size(results_pv) == (1, 1)
+        @test 0.0 < results_pv[1, 1].pvalue ≤ 1.0
+    end
 end

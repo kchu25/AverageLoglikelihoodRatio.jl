@@ -311,4 +311,46 @@ function compare_pfms(input::AbstractMatrix{<:Real},
     return ALLRResult(best_score, best_offset, pval)
 end
 
+# ──────────────────────────────────────────────────────────────────────────── #
+#  Batch comparison: multiple inputs × multiple targets
+# ──────────────────────────────────────────────────────────────────────────── #
+
+"""
+    compare_pfms(inputs, targets;
+                 background = fill(0.25, 4),
+                 n_perm     = 1000,
+                 compute_pvalue = true,
+                 rng        = Random.default_rng())
+
+Compare every input PFM against every target PFM.
+
+# Arguments
+- `inputs`  : `Vector` of `4 × Wᵢ` PFMs.
+- `targets` : `Vector` of `4 × Wⱼ` PFMs.
+
+Keyword arguments are identical to the single-pair method.
+
+# Returns
+A `Matrix{ALLRResult}` of size `(length(inputs), length(targets))` where
+element `(i, j)` is the result of `compare_pfms(inputs[i], targets[j]; ...)`.
+"""
+function compare_pfms(inputs::AbstractVector{<:AbstractMatrix{<:Real}},
+                      targets::AbstractVector{<:AbstractMatrix{<:Real}};
+                      background::AbstractVector{<:Real} = fill(0.25, 4),
+                      n_perm::Int = 1000,
+                      compute_pvalue::Bool = true,
+                      rng::AbstractRNG = Random.default_rng())
+    n_in = length(inputs)
+    n_tg = length(targets)
+    results = Matrix{ALLRResult}(undef, n_in, n_tg)
+    for j in 1:n_tg, i in 1:n_in
+        results[i, j] = compare_pfms(inputs[i], targets[j];
+                                     background=background,
+                                     n_perm=n_perm,
+                                     compute_pvalue=compute_pvalue,
+                                     rng=rng)
+    end
+    return results
+end
+
 end
