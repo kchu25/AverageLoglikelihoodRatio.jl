@@ -1,0 +1,6 @@
+[deps]
+AverageLoglikelihoodRatio = "06875939-83ae-4909-8529-2b6af0a65917"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
+[sources]
+AverageLoglikelihoodRatio = {path = ".."}
