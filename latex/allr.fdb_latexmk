@@ -1,7 +1,7 @@
 # Fdb version 4
-["pdflatex"] 1773687224.77606 "/home/shane/Desktop/academia/code/dev/AverageLoglikelihoodRatio/latex/allr.tex" "allr.pdf" "allr" 1773687224.96647 0
+["pdflatex"] 1773691293.91861 "/home/shane/Desktop/academia/code/dev/AverageLoglikelihoodRatio/latex/allr.tex" "allr.pdf" "allr" 1773691294.1134 0
   "/etc/texmf/web2c/texmf.cnf" 1759337716.49006 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/shane/Desktop/academia/code/dev/AverageLoglikelihoodRatio/latex/allr.tex" 1773687224.08023 3385 07c5ae37fd1f7a86a6fd31475eb69f53 ""
+  "/home/shane/Desktop/academia/code/dev/AverageLoglikelihoodRatio/latex/allr.tex" 1773691293.66448 3409 cce69cc5900afabfebf7a4c91d111da8 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -35,6 +35,7 @@
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1248133631 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb" 1248133631 35469 70d41d2b9ea31d5d813066df7c99281c ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1248133631 35752 024fb6c41858982481f6968b5fc26508 ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb" 1248133631 32722 d7379af29a190c3f453aba36302ff5a9 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1248133631 32362 179c33bbf43f19adbb3825bb4e36e57a ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb" 1248133631 32726 0a1aea6fcd6468ee2cf64d891f5c43c8 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1248133631 32569 5e5ddc8df908dea60932f3c484a54c0d ""
@@ -96,9 +97,9 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1762800198.48384 5349216 bf3a80e68d946c7acd95ff030fd9bb63 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1759338875 6831231 ab0dbe36151b900506f42e512d082e32 ""
-  "allr.aux" 1773687224.94221 876 65ed621db301bce6a3662c7b928d1bd2 "pdflatex"
-  "allr.out" 1773687224.94221 870 27d8f30808ee1ecaaeaed5d6b5ecdbe7 "pdflatex"
-  "allr.tex" 1773687224.08023 3385 07c5ae37fd1f7a86a6fd31475eb69f53 ""
+  "allr.aux" 1773691294.08848 876 65ed621db301bce6a3662c7b928d1bd2 "pdflatex"
+  "allr.out" 1773691294.08848 870 27d8f30808ee1ecaaeaed5d6b5ecdbe7 "pdflatex"
+  "allr.tex" 1773691293.66448 3409 cce69cc5900afabfebf7a4c91d111da8 ""
   (generated)
   "allr.aux"
   "allr.log"
