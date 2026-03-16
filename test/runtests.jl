@@ -141,21 +141,23 @@ using Random
         @test_throws ArgumentError compare_pfms(rand(4, 4), rand(4, 4); background=[0.5, 0.5])
     end
 
-    # ── ALLRResult display ─────────────────────────────────────────────────
+    # ── ALLRResult display ─────────────────────────────────────────────────────────
     @testset "ALLRResult show" begin
-        r = ALLRResult(1.234, 3, 0.005)
+        r = ALLRResult(1.234, 3, 0.005, false)
         buf = IOBuffer()
         show(buf, r)
         s = String(take!(buf))
         @test occursin("1.234", s)
         @test occursin("offset=3", s)
         @test occursin("0.005", s)
+        @test occursin("forward", s)
 
-        r2 = ALLRResult(0.5, 0, NaN)
+        r2 = ALLRResult(0.5, 0, NaN, true)
         buf2 = IOBuffer()
         show(buf2, r2)
         s2 = String(take!(buf2))
         @test occursin("not computed", s2)
+        @test occursin("reverse", s2)
     end
 
     # ── Batch comparison: multiple inputs × multiple targets ───────────────
@@ -202,5 +204,50 @@ using Random
         results_pv = compare_pfms([pfm1], [pfm1]; n_perm=200, rng=rng)
         @test size(results_pv) == (1, 1)
         @test 0.0 < results_pv[1, 1].pvalue ≤ 1.0
+    end
+
+    # ── Reverse complement ──────────────────────────────────────────────────────
+    @testset "compare_pfms – reverse complement" begin
+        # A motif and its reverse complement should be a perfect match
+        # when reverse_comp=true
+        motif = [0.9 0.05 0.05;
+                 0.05 0.85 0.05;
+                 0.025 0.05 0.85;
+                 0.025 0.05 0.05]
+
+        # Manually build the reverse complement:
+        # swap rows A↔T (1↔4), C↔G (2↔3), then reverse columns
+        motif_rc = motif[[4, 3, 2, 1], end:-1:1]
+
+        # Without reverse_comp: comparing motif to its RC on forward strand
+        res_fwd = compare_pfms(motif, motif_rc; compute_pvalue=false)
+        @test res_fwd.reverse_complement == false
+
+        # With reverse_comp: should find the RC match and score higher or equal
+        res_rc = compare_pfms(motif, motif_rc; compute_pvalue=false, reverse_comp=true)
+        @test res_rc.score ≥ res_fwd.score
+        # The RC of the RC is the original, so it should be a perfect match
+        @test res_rc.reverse_complement == true
+
+        # Score with reverse_comp=true on the RC target should equal
+        # the self-comparison score
+        res_self = compare_pfms(motif, motif; compute_pvalue=false)
+        @test res_rc.score ≈ res_self.score
+
+        # Forward-only: default reverse_complement field is false
+        res_default = compare_pfms(motif, motif; compute_pvalue=false)
+        @test res_default.reverse_complement == false
+
+        # Reverse comp with p-value
+        rng = MersenneTwister(77)
+        res_pv = compare_pfms(motif, motif_rc; n_perm=200, reverse_comp=true, rng=rng)
+        @test 0.0 < res_pv.pvalue ≤ 1.0
+        @test res_pv.reverse_complement == true
+
+        # Batch with reverse_comp
+        results = compare_pfms([motif], [motif_rc]; compute_pvalue=false, reverse_comp=true)
+        @test size(results) == (1, 1)
+        @test results[1, 1].reverse_complement == true
+        @test results[1, 1].score ≈ res_self.score
     end
 end

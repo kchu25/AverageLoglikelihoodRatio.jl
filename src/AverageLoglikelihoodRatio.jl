@@ -14,19 +14,22 @@ export allr_column, allr_matrix, compare_pfms, ALLRResult
 Result of comparing two PFMs via the Average Log-Likelihood Ratio.
 
 # Fields
-- `score::Float64`  – best ALLR score across all valid offsets
-- `offset::Int`     – offset (0-indexed) of the shorter matrix on the longer one at the best alignment
-- `pvalue::Float64` – p-value from the permutation test (NaN when not computed)
+- `score::Float64`            – best ALLR score across all valid offsets
+- `offset::Int`               – offset (0-indexed) of the shorter matrix on the longer one at the best alignment
+- `pvalue::Float64`           – p-value from the permutation test (NaN when not computed)
+- `reverse_complement::Bool`  – whether the best match was on the reverse complement strand
 """
 struct ALLRResult
     score::Float64
     offset::Int
     pvalue::Float64
+    reverse_complement::Bool
 end
 
 function Base.show(io::IO, r::ALLRResult)
     pstr = isnan(r.pvalue) ? "not computed" : string(round(r.pvalue; sigdigits=4))
-    print(io, "ALLRResult(score=$(round(r.score; sigdigits=6)), offset=$(r.offset), pvalue=$pstr)")
+    strand = r.reverse_complement ? "reverse" : "forward"
+    print(io, "ALLRResult(score=$(round(r.score; sigdigits=6)), offset=$(r.offset), strand=$strand, pvalue=$pstr)")
 end
 
 # ──────────────────────────────────────────────────────────────────────────── #
@@ -127,6 +130,21 @@ function _best_allr(pfm_short::AbstractMatrix{<:Real},
 end
 
 # ──────────────────────────────────────────────────────────────────────────── #
+#  Reverse complement of a PFM
+# ──────────────────────────────────────────────────────────────────────────── #
+
+"""
+    _reverse_complement_pfm(pfm)
+
+Return the reverse complement of a `4 × W` PFM.  Rows are assumed to be
+ordered A, C, G, T.  The reverse complement reverses the column order and
+swaps A↔T (rows 1↔4) and C↔G (rows 2↔3).
+"""
+function _reverse_complement_pfm(pfm::AbstractMatrix{<:Real})
+    return pfm[[4, 3, 2, 1], end:-1:1]
+end
+
+# ──────────────────────────────────────────────────────────────────────────── #
 #  Random PFM generation (for permutation null)
 # ──────────────────────────────────────────────────────────────────────────── #
 
@@ -212,6 +230,7 @@ function _permutation_pvalue(observed::Float64,
                              width_target::Int,
                              n_perm::Int,
                              background::AbstractVector{<:Real},
+                             reverse_comp::Bool,
                              rng::AbstractRNG)
     count_ge = 0
     w_input = size(pfm_input, 2)
@@ -222,6 +241,15 @@ function _permutation_pvalue(observed::Float64,
             sc, _ = _best_allr(pfm_input, rand_pfm; background=background)
         else
             sc, _ = _best_allr(rand_pfm, pfm_input; background=background)
+        end
+        if reverse_comp
+            rand_rc = _reverse_complement_pfm(rand_pfm)
+            if w_input <= width_target
+                sc_rc, _ = _best_allr(pfm_input, rand_rc; background=background)
+            else
+                sc_rc, _ = _best_allr(rand_rc, pfm_input; background=background)
+            end
+            sc = max(sc, sc_rc)
         end
         if sc >= observed
             count_ge += 1
@@ -239,6 +267,7 @@ end
                  background = fill(0.25, 4),
                  n_perm     = 1000,
                  compute_pvalue = true,
+                 reverse_comp   = false,
                  rng        = Random.default_rng())
 
 Compare two Position Frequency Matrices using the **Average Log-Likelihood
@@ -255,10 +284,14 @@ Ratio** (ALLR, Ting Wang).
                      (default `1000`).
 - `compute_pvalue` : set to `false` to skip the permutation test and return
                      only the raw ALLR score (much faster).
+- `reverse_comp`   : if `true`, also scan the reverse complement of the
+                     target and report whichever strand gives the higher
+                     score (default `false`).
 - `rng`            : random number generator for reproducibility.
 
 # Returns
-An [`ALLRResult`](@ref) with fields `score`, `offset`, and `pvalue`.
+An [`ALLRResult`](@ref) with fields `score`, `offset`, `pvalue`, and
+`reverse_complement`.
 
 # Example
 ```julia
@@ -286,6 +319,7 @@ function compare_pfms(input::AbstractMatrix{<:Real},
                       background::AbstractVector{<:Real} = fill(0.25, 4),
                       n_perm::Int = 1000,
                       compute_pvalue::Bool = true,
+                      reverse_comp::Bool = false,
                       rng::AbstractRNG = Random.default_rng())
     size(input, 1) == 4 || throw(ArgumentError("`input` must have 4 rows (A, C, G, T)."))
     size(target, 1) == 4 || throw(ArgumentError("`target` must have 4 rows (A, C, G, T)."))
@@ -294,20 +328,36 @@ function compare_pfms(input::AbstractMatrix{<:Real},
     w_in = size(input, 2)
     w_tg = size(target, 2)
 
-    # Slide the shorter PFM over the longer one
+    # Forward strand
     if w_in <= w_tg
         best_score, best_offset = _best_allr(input, target; background=background)
     else
         best_score, best_offset = _best_allr(target, input; background=background)
     end
+    is_rc = false
+
+    # Reverse complement strand
+    if reverse_comp
+        target_rc = _reverse_complement_pfm(target)
+        if w_in <= w_tg
+            rc_score, rc_offset = _best_allr(input, target_rc; background=background)
+        else
+            rc_score, rc_offset = _best_allr(target_rc, input; background=background)
+        end
+        if rc_score > best_score
+            best_score  = rc_score
+            best_offset = rc_offset
+            is_rc = true
+        end
+    end
 
     # Permutation p-value
     pval = NaN
     if compute_pvalue
-        pval = _permutation_pvalue(best_score, input, w_tg, n_perm, background, rng)
+        pval = _permutation_pvalue(best_score, input, w_tg, n_perm, background, reverse_comp, rng)
     end
 
-    return ALLRResult(best_score, best_offset, pval)
+    return ALLRResult(best_score, best_offset, pval, is_rc)
 end
 
 # ──────────────────────────────────────────────────────────────────────────── #
@@ -319,6 +369,7 @@ end
                  background = fill(0.25, 4),
                  n_perm     = 1000,
                  compute_pvalue = true,
+                 reverse_comp   = false,
                  rng        = Random.default_rng())
 
 Compare every input PFM against every target PFM.
@@ -338,6 +389,7 @@ function compare_pfms(inputs::AbstractVector{<:AbstractMatrix{<:Real}},
                       background::AbstractVector{<:Real} = fill(0.25, 4),
                       n_perm::Int = 1000,
                       compute_pvalue::Bool = true,
+                      reverse_comp::Bool = false,
                       rng::AbstractRNG = Random.default_rng())
     n_in = length(inputs)
     n_tg = length(targets)
@@ -347,6 +399,7 @@ function compare_pfms(inputs::AbstractVector{<:AbstractMatrix{<:Real}},
                                      background=background,
                                      n_perm=n_perm,
                                      compute_pvalue=compute_pvalue,
+                                     reverse_comp=reverse_comp,
                                      rng=rng)
     end
     return results

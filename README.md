@@ -33,9 +33,10 @@ target = [0.25 0.88 0.06 0.06 0.25;
           0.25 0.04 0.05 0.07 0.25]
 
 result = compare_pfms(input, target)
-result.score   # best ALLR across all alignments
-result.offset  # 0-indexed position of shorter PFM on longer PFM
-result.pvalue  # permutation p-value (1000 permutations by default)
+result.score              # best ALLR across all alignments
+result.offset             # 0-indexed position of shorter PFM on longer PFM
+result.pvalue             # permutation p-value (1000 permutations by default)
+result.reverse_complement # true if the best match was on the reverse complement strand
 ```
 
 ### Multiple inputs vs. multiple targets
@@ -56,6 +57,7 @@ compare_pfms(input, target;
     background     = [0.25, 0.25, 0.25, 0.25],  # nucleotide background frequencies
     n_perm         = 1000,                        # number of permutations for p-value
     compute_pvalue = true,                        # set false to skip permutation test
+    reverse_comp   = false,                       # also scan the reverse complement of the target
     rng            = Random.default_rng()         # RNG for reproducibility
 )
 ```
@@ -73,7 +75,9 @@ compare_pfms(input, target;
 
 The shorter PFM is slid across every valid offset of the longer PFM. At each offset, the mean ALLR across aligned columns is computed. The offset with the highest score is reported.
 
-For the p-value, `n_perm` random PFMs are drawn from a Dirichlet distribution parameterized by the background frequencies. The observed score is compared against this null distribution:
+When `reverse_comp=true`, the same scan is repeated on the reverse complement of the target (rows reordered A↔T, C↔G; columns reversed). The strand with the higher score wins and is recorded in `result.reverse_complement`.
+
+For the p-value, `n_perm` random PFMs are drawn from a Dirichlet distribution parameterized by the background frequencies. When `reverse_comp=true`, each random PFM is also scanned on both strands so the null distribution is calibrated consistently. The observed score is compared against this null:
 
 ```
 P = (count(S_random >= S_observed) + 1) / (N_permutations + 1)
